@@ -5,7 +5,7 @@
 **WebAuthn passkey step-up driver for [Laravel Rebel](https://github.com/padosoft/laravel-rebel-core).**
 
 Bridges `spatie/laravel-passkeys` (or any WebAuthn library you prefer) into Rebel's step-up
-`DriverRegistry`, giving you a phishing-resistant **AAL3** step-up factor with one `composer require`
+`DriverRegistry`, giving you a **phishing-resistant (AAL2)** step-up factor with one `composer require`
 and two lines of configuration.
 
 [![CI](https://github.com/padosoft/laravel-rebel-bridge-passkeys/actions/workflows/ci.yml/badge.svg)](https://github.com/padosoft/laravel-rebel-bridge-passkeys/actions/workflows/ci.yml)
@@ -23,8 +23,8 @@ Before diving in, here are the terms you will encounter throughout this README.
 | **Passkey** | A cryptographic credential stored in a hardware-backed secure enclave (phone, laptop TPM, YubiKey). You use it with Face ID, fingerprint, or a PIN. No password involved. |
 | **WebAuthn / FIDO2** | The W3C + FIDO Alliance standard that defines how browsers talk to authenticators. Passkeys are WebAuthn credentials. |
 | **Phishing-resistant** | An assertion is cryptographically bound to the *exact* origin (domain + protocol) of the page that called `navigator.credentials.get()`. A phishing site on a different domain literally cannot capture and replay a valid assertion — the signature simply won't verify. OTP/TOTP/SMS are NOT phishing-resistant. |
-| **AAL3** | NIST SP 800-63B Authenticator Assurance Level 3 — the highest tier. Requires a hardware-backed, phishing-resistant factor. Passkeys qualify. |
-| **AMR** | Authentication Methods Reference — a list of short strings (e.g. `['webauthn','hwk']`) that describe HOW the user authenticated. Used by compliance and audit systems. |
+| **AAL2 (phishing-resistant)** | NIST SP 800-63B Authenticator Assurance Level 2. This driver declares **AAL2 + phishing-resistant**: a passkey can't be phished, but most consumer passkeys are *synced* across a vendor cloud (iCloud Keychain, Google Password Manager) rather than hardware-bound, so strict NIST reserves **AAL3** for device-bound/security-key authenticators only. The honest default is AAL2-phishing-resistant; a deployment that mandates device-bound passkeys can raise it. |
+| **AMR** | Authentication Methods Reference — a list of short strings (e.g. `['webauthn']`) that describe HOW the user authenticated. Used by compliance and audit systems. |
 | **Step-up** | An in-session re-authentication challenge. The user is already logged in; before a sensitive action (e.g. changing payment method, approving a transfer) you ask them to confirm their identity again using a strong factor. |
 | **DriverRegistry** | The Rebel step-up registry. Each package contributes its own driver (email-OTP, TOTP, passkey…). The Rebel core selects the right driver for a given purpose/assurance policy. |
 | **PasskeyChallenger** | The seam (interface) in this bridge. It decouples the driver logic from any specific WebAuthn library. |
@@ -190,7 +190,7 @@ Route::post('/account/delete', [AccountController::class, 'destroy'])
 // config/rebel-step-up.php
 'purposes' => [
     'delete-account' => [
-        'required_aal' => 'aal3',
+        'required_aal' => 'aal2',
         'require_phishing_resistant' => true,
         'drivers' => ['passkeys'],
     ],
@@ -288,9 +288,9 @@ in the Rebel admin all light up:
 
 | Event type | When | `channel` | `amr` | `aal` |
 |---|---|---|---|---|
-| `stepup.passkeys.started` | A challenge was issued via `start()` | `passkey` | `['webauthn','hwk']` | `aal3` |
-| `stepup.passkeys.verified` | Assertion verified successfully | `passkey` | `['webauthn','hwk']` | `aal3` |
-| `stepup.passkeys.failed` | Assertion rejected, missing reference, or any exception | `passkey` | `['webauthn','hwk']` | `aal3` |
+| `stepup.passkeys.started` | A challenge was issued via `start()` | `passkey` | `['webauthn']` | `aal2` |
+| `stepup.passkeys.verified` | Assertion verified successfully | `passkey` | `['webauthn']` | `aal2` |
+| `stepup.passkeys.failed` | Assertion rejected, missing reference, or any exception | `passkey` | `['webauthn']` | `aal2` |
 
 All events include `subjectType` and `subjectId` (the authenticated user's class and ID). The raw
 WebAuthn assertion and credential bytes are **never** included in any audit field.
@@ -299,13 +299,13 @@ WebAuthn assertion and credential bytes are **never** included in any audit fiel
 
 ## Competitor card-battle table
 
-How does passkey-based phishing-resistant AAL3 step-up compare to what other platforms offer?
+How does passkey-based phishing-resistant (AAL2) step-up compare to what other platforms offer?
 
 | Feature | Laravel Rebel (this package) | Laravel Fortify (plain) | Shopify | Auth0 | Okta |
 |---|---|---|---|---|---|
-| Passkey / WebAuthn step-up | ✅ AAL3, phishing-resistant | ❌ No step-up system | ❌ No developer step-up API | ⚠️ Enterprise tier only | ⚠️ Paid addon |
+| Passkey / WebAuthn step-up | ✅ AAL2, phishing-resistant | ❌ No step-up system | ❌ No developer step-up API | ⚠️ Enterprise tier only | ⚠️ Paid addon |
 | Phishing-resistant by spec | ✅ Origin-bound by design | ❌ | ❌ | ✅ (if enabled) | ✅ (if enabled) |
-| AMR / AAL in audit trail | ✅ `['webauthn','hwk']`, AAL3 | ❌ No standard audit | ❌ | ⚠️ OIDC claims only | ⚠️ OIDC claims only |
+| AMR / AAL in audit trail | ✅ `['webauthn']`, AAL2 | ❌ No standard audit | ❌ | ⚠️ OIDC claims only | ⚠️ OIDC claims only |
 | Bring your own WebAuthn lib | ✅ Any library via PasskeyChallenger | ❌ | ❌ | ❌ | ❌ |
 | Works without Fortify | ✅ Zero Fortify dependency | N/A | N/A | N/A | N/A |
 | Offline tests (no browser) | ✅ FakePasskeyChallenger | ❌ | ❌ | ❌ | ❌ |
@@ -353,7 +353,7 @@ src/
   Contracts/
     PasskeyChallenger.php         # The seam: swap the WebAuthn library here
   Drivers/
-    PasskeysStepUpDriver.php      # Core driver (key:'passkeys', AAL3, phishing-resistant)
+    PasskeysStepUpDriver.php      # Core driver (key:'passkeys', AAL2, phishing-resistant)
   Testing/
     FakePasskeyChallenger.php     # Deterministic test double
   RebelPasskeysBridgeServiceProvider.php

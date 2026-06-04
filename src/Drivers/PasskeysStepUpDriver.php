@@ -15,12 +15,17 @@ use Padosoft\Rebel\StepUp\StepUpContext;
 /**
  * Step-up driver backed by a WebAuthn passkey / FIDO2 credential.
  *
- * Assurance: **AAL3 and phishing-resistant** — the strongest step-up factor available
- * in the Laravel Rebel suite. A passkey is bound to a specific origin (domain + protocol),
- * so a phishing site operating on a different domain cannot capture and replay the assertion.
+ * Assurance: **AAL2 and phishing-resistant** — the phishing-resistant step-up factor of
+ * the Laravel Rebel suite. A passkey is bound to a specific origin (domain + protocol), so
+ * a phishing site operating on a different domain cannot capture and replay the assertion.
  *
- * AMR values: 'webauthn' (method = public-key credential), 'hwk' (hardware key attestation
- * — passkeys are stored in a hardware-backed secure enclave or security key).
+ * Why AAL2 and not AAL3: NIST 800-63B reserves AAL3 for a *hardware-bound* authenticator.
+ * Modern passkeys are routinely **synced** across a vendor's cloud (iCloud Keychain, Google
+ * Password Manager), which is phishing-resistant but NOT hardware-bound, so the honest,
+ * conservative declaration is AAL2-phishing-resistant — matching the Fortify bridge's passkey
+ * driver. (A deployment that mandates device-bound/security-key passkeys can raise this.)
+ *
+ * AMR value: 'webauthn' (method = public-key credential).
  *
  * Audit events:
  *  - 'stepup.passkeys.started'  — challenge issued (start() called, user has passkey).
@@ -37,7 +42,7 @@ use Padosoft\Rebel\StepUp\StepUpContext;
 final class PasskeysStepUpDriver implements StepUpDriver
 {
     /** @var list<string> */
-    private const AMR = ['webauthn', 'hwk'];
+    private const AMR = ['webauthn'];
 
     public function __construct(
         private readonly PasskeyChallenger $challenger,
@@ -51,7 +56,7 @@ final class PasskeysStepUpDriver implements StepUpDriver
 
     public function assurance(): AssuranceLevel
     {
-        return new AssuranceLevel(Aal::Aal3, phishingResistant: true, amr: self::AMR);
+        return new AssuranceLevel(Aal::Aal2, phishingResistant: true, amr: self::AMR);
     }
 
     public function isAvailableFor(StepUpContext $context): bool

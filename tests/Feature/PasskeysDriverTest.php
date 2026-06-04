@@ -18,14 +18,14 @@ use Padosoft\Rebel\StepUp\DriverRegistry;
 // Assurance
 // ---------------------------------------------------------------------------
 
-it('declares AAL3 and is phishing-resistant with webauthn+hwk AMR', function (): void {
+it('declares AAL2 and is phishing-resistant with webauthn AMR', function (): void {
     $driver = new PasskeysStepUpDriver(new FakePasskeyChallenger, app(AuditLogger::class));
     $assurance = $driver->assurance();
 
-    expect($assurance->aal)->toBe(Aal::Aal3)
+    expect($assurance->aal)->toBe(Aal::Aal2)
         ->and($assurance->phishingResistant)->toBeTrue()
         ->and($assurance->amr)->toContain('webauthn')
-        ->and($assurance->amr)->toContain('hwk');
+        ->and($assurance->amr)->not->toContain('hwk');
 });
 
 it('has the key passkeys', function (): void {

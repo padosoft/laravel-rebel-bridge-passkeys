@@ -1,27 +1,70 @@
 {
     "name": "padosoft/laravel-rebel-bridge-passkeys",
-    "description": "Passkey / WebAuthn bridge for Laravel Rebel.",
-    "keywords": ["laravel", "authentication", "padosoft", "rebel"],
+    "description": "WebAuthn passkey step-up driver for Laravel Rebel: bridges spatie/laravel-passkeys into Rebel's step-up registry, issuing phishing-resistant AAL3 challenges.",
+    "keywords": ["laravel", "authentication", "passkey", "webauthn", "fido2", "step-up", "padosoft", "rebel"],
     "homepage": "https://github.com/padosoft/laravel-rebel-bridge-passkeys",
     "license": "MIT",
-    "authors": [ { "name": "Padosoft", "email": "support@padosoft.com", "homepage": "https://www.padosoft.com" } ],
+    "authors": [
+        {
+            "name": "Padosoft",
+            "email": "support@padosoft.com",
+            "homepage": "https://www.padosoft.com"
+        }
+    ],
     "require": {
         "php": "^8.3",
         "illuminate/contracts": "^12.0|^13.0",
         "illuminate/support": "^12.0|^13.0",
+        "padosoft/laravel-rebel-core": "^0.1",
+        "padosoft/laravel-rebel-step-up": "^0.1",
         "spatie/laravel-package-tools": "^1.92"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.18",
         "orchestra/testbench": "^10.0|^11.0",
+        "padosoft/laravel-rebel-email-otp": "^0.1",
         "pestphp/pest": "^4.0",
-        "pestphp/pest-plugin-laravel": "^4.0"
+        "pestphp/pest-plugin-laravel": "^4.0",
+        "spatie/laravel-passkeys": "^1.0"
     },
-    "autoload": { "psr-4": { "Padosoft\\Rebel\\Bridge\\Passkeys\\": "src/" } },
-    "autoload-dev": { "psr-4": { "Padosoft\\Rebel\\Bridge\\Passkeys\\Tests\\": "tests/" } },
-    "extra": { "laravel": { "providers": [ "Padosoft\\Rebel\\Bridge\\Passkeys\\RebelPasskeysBridgeServiceProvider" ] } },
-    "config": { "sort-packages": true, "allow-plugins": { "pestphp/pest-plugin": true, "phpstan/extension-installer": true } },
+    "suggest": {
+        "spatie/laravel-passkeys": "Provides the SpatiePasskeyChallenger implementation backed by spatie/laravel-passkeys. Without it, bind your own PasskeyChallenger to the container."
+    },
+    "autoload": {
+        "psr-4": {
+            "Padosoft\\Rebel\\Bridge\\Passkeys\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Padosoft\\Rebel\\Bridge\\Passkeys\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Padosoft\\Rebel\\Bridge\\Passkeys\\RebelPasskeysBridgeServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "pint": "pint",
+        "check": [
+            "@pint --test",
+            "@phpstan",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "phpstan/extension-installer": true
+        }
+    },
     "minimum-stability": "stable",
     "prefer-stable": true
 }

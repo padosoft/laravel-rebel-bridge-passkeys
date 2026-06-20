@@ -1,5 +1,8 @@
 # laravel-rebel-bridge-passkeys
 
+> Official documentation: https://doc.laravel-rebel.padosoft.com
+
+
 ![Laravel Rebel Banner](resources/screenshoots/Laravel-Rebel-banner.png)
 
 **WebAuthn passkey step-up driver for [Laravel Rebel](https://github.com/padosoft/laravel-rebel-core).**
@@ -372,3 +375,4 @@ MIT — see [LICENSE](LICENSE).
 
 Part of the [Laravel Rebel](https://github.com/padosoft/laravel-rebel-core) enterprise-auth suite
 by [Padosoft](https://www.padosoft.com).
+
